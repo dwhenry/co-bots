@@ -1,0 +1,36 @@
+bots:
+  - name: john4
+    password: qwerty123
+    max_games: 3
+    default_game_size: 3
+    same_player: 2
+
+  - name: bob4
+    password: qwerty123
+    max_games: 2
+    default_game_size: 4
+    same_player: 3
+
+  - name: jones4
+    password: qwerty123
+    max_games: 3
+    default_game_size: 5
+    same_player: 1
+
+  - name: fred4
+    password: qwerty123
+    max_games: 3
+    default_game_size: 3
+    same_player: 3
+
+  - name: adam4
+    password: qwerty123
+    max_games: 4
+    default_game_size: 4
+    same_player: 2
+
+  - name: dan4
+    password: qwerty123
+    max_games: 3
+    default_game_size: 3
+    same_player: 2
