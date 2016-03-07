@@ -4,6 +4,7 @@ require 'json'
 require 'pry'
 
 require 'dumb_bot/simple_api'
+require 'dumb_bot/actions'
 require 'dumb_bot/bot'
 require 'dumb_bot/games'
 

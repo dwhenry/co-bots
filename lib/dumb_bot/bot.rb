@@ -17,7 +17,7 @@ module DumbBot
       puts @config['name']
 
       data = @api.games
-      puts data
+      # puts data
       games = DumbBot::Games.new(@api, data)
 
       if games.playing_in < @config['max_games']
@@ -27,7 +27,7 @@ module DumbBot
           true
         else
           puts 'creating'
-          @api.create_game(@config[:default_game_size])
+          @api.create_game(@config['default_game_size'])
           true
         end
       else
@@ -36,14 +36,14 @@ module DumbBot
     end
 
     def take_next_game_action
-      puts @api.games_for(:playing)
+      # puts @api.games_for(:playing)
       next_game = nil
       has_action = @api.games_for(:playing).any? do |game|
         next_game = @api.game(game['uuid'])
         next_game['actions'].any?
       end
 
-      DumbBot::Actions.new(@api, next_game).perform if has_action
+      DumbBot::Actions.new(@api, @config['name'], next_game).perform if has_action
     end
   end
 end
