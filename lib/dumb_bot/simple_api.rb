@@ -26,7 +26,7 @@ module DumbBot
       if (200..399).cover?(response.code.to_i)
         JSON.parse(response.body)
       else
-        raise "HTTP error (#{response.code}): performing #{action}"
+        raise "HTTP error (#{response.code}): performing #{action}\n#{response.body}"
       end
     end
 
@@ -60,7 +60,7 @@ module DumbBot
       if (200..399).cover?(response.code.to_i)
         JSON.parse(response.body)
       else
-        raise "HTTP error (#{response.code}): GET #{url}"
+        raise "HTTP error (#{response.code}): GET #{url}\n#{response.body}"
       end
     end
 
@@ -72,7 +72,7 @@ module DumbBot
       if (200..399).cover?(response.code.to_i)
         JSON.parse(response.body)
       else
-        raise "HTTP error (#{response.code}): POST #{url}"
+        raise "HTTP error (#{response.code}): POST #{url}\n#{response.body}"
       end
     end
   end

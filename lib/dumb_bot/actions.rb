@@ -28,35 +28,8 @@ module DumbBot
     end
 
     def guess
-      tiles = details['game']['players'].flat_map do |player|
-        player['tiles'].select { |t| t['value'] }
-      end
-      known_tiles = tiles.
-        sort_by { |t| t['value'] }.
-        group_by { |t| t['color'] }.
-        each_with_object({}) { |(c, a), h| h[c] = a.map { |t| t['value'] } }
-
-      picks = details['game']['players'].flat_map do |player|
-        next if player['name'] == @player_name
-        player['tiles'].each_with_index.flat_map do |tile, index|
-          options = (0..11).to_a - known_tiles[tile['color']]
-          # this does not take into account the other color
-          lower = index
-          upper = options.count - player['tiles'].count + index
-
-          options[lower..upper].map do |value|
-            {
-              player: player['name'],
-              tile_position: index,
-              value: value,
-              color: tile['color']
-            }
-          end
-        end
-      end
-
-      binding.pry
-      picks
+      pick = Guess.new(details, @player_name).guess
+      @api.perform(details['uuid'], :guess, pick )
     end
   end
 end

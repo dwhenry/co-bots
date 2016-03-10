@@ -13,8 +13,8 @@ module DumbBot
     end
 
     def join_game
-      puts "*" * 20
-      puts @config['name']
+      # puts "*" * 20
+      # puts @config['name']
 
       data = @api.games
       # puts data
@@ -22,11 +22,11 @@ module DumbBot
 
       if games.playing_in < @config['max_games']
         if (joinable_game_uuid = games.joinable_game(@config['same_player']))
-          puts "joining #{joinable_game_uuid}"
+          # puts "joining #{joinable_game_uuid}"
           @api.perform(joinable_game_uuid, :join)
           true
         else
-          puts 'creating'
+          # puts 'creating'
           @api.create_game(@config['default_game_size'])
           true
         end
@@ -36,14 +36,14 @@ module DumbBot
     end
 
     def take_next_game_action
-      # puts @api.games_for(:playing)
-      next_game = nil
-      has_action = @api.games_for(:playing).any? do |game|
-        next_game = @api.game(game['uuid'])
-        next_game['actions'].any?
+      next_game = @api.games_for(:playing).detect do |game|
+        @api.game(game['uuid'])['actions'].any?
       end
 
-      DumbBot::Actions.new(@api, @config['name'], next_game).perform if has_action
+      if next_game
+        next_game = @api.game(next_game['uuid'])
+        DumbBot::Actions.new(@api, @config['name'], next_game).perform
+      end
     end
   end
 end
