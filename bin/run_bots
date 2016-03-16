@@ -1,17 +1,37 @@
 #!/usr/bin/env ruby
 $LOAD_PATH << 'lib'
+require 'yaml'
+require 'json'
+require 'bot'
 
-require 'dumb_bot'
 
-continuous = ARGV[0] == 'c'
+module BotRunner
+  extend self
 
-loop do
-  puts "Running bots..."
-  DumbBot.run
-  if continuous
-    sleep 2
-    puts ''
-  else
-    exit 0
+  # call from system scheduler
+  def run(continuously)
+    loop do
+      run_bots
+      return unless continuously
+      sleep 1
+    end
+  end
+
+  def run_bots
+    puts "Running bots..."
+    bots.each do |bot|
+      bot.take_next_action
+    end
+  end
+
+  def bots
+    config = YAML.load(File.read(File.expand_path("#{__dir__}/../config/bots.yml")))
+
+    domain = config.fetch('domain', 'http://localhost:3002/')
+    config['bots'].map do |bot_config|
+      Bot.new(domain, bot_config)
+    end
   end
 end
+
+BotRunner.run(ARGV[0] == 'c')

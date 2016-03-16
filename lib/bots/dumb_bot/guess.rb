@@ -7,7 +7,6 @@ module DumbBot
     end
 
     def guess
-
       picks =  picks_for_players(details['game']['players'], tiles_by_color)
 
       delete = [5,6,4,7,3,8,2,9,1,10,0,11]
@@ -19,28 +18,23 @@ module DumbBot
         pruned_picks = pruned_picks.reject { |o| o[:value] == delete_value}
       end
 
-      pick = (best_picks || picks).shuffle.first
+      (best_picks || picks).shuffle.first
     end
 
     def picks_for_players(players, known_tiles)
       players.flat_map do |player|
         next if player['name'] == @player_name
 
-        tiles = player['tiles']
-        name = player['name']
-
-        winners = tiles_for_player(known_tiles, name, tiles)
-        if winners.count == 1
-          return winners
-        end
-        winners
+        player_tiles = tiles_for_player(known_tiles, player['name'], player['tiles'])
+        return player_tiles if player_tiles.count == 1
+        player_tiles
       end.compact
     end
 
     def tiles_for_player(known_tiles, name, tiles)
       tiles.each_with_index.flat_map do |tile, index|
         next if tile['value']
-        # puts "Looking at: #{name}: #{index}"
+
         options = lower(known_tiles, index == 0 ? [] : tiles[0..index-1], tile['color']) &
           higher(known_tiles, tiles[index+1..-1], tile['color'])
 
@@ -55,16 +49,15 @@ module DumbBot
       end
     end
 
-    def best_picks(options)
-      pick_counts = options.group_by { |o| [o[:player], o[:tile_position]] }.
-        map { |k, a| [k, a.count] }
+    def best_picks(options, group_field=:tile_position, min_count_win=1)
+      pick_counts = options.group_by { |o| [o[:player], o[group_field]] }
 
-      min_count = pick_counts.map { |_, c| c}.min
+      min_count = pick_counts.map { |_, c| c.count }.min
 
-      picks = pick_counts.select { |_, c| c == min_count }.map(&:first)
+      picks = pick_counts.select { |_, c| c.count == min_count }
 
-      if picks.count < 2
-        options.select { |o| picks.include?([o[:player], o[:tile_position]]) }
+      if picks.count < 2 || min_count <= min_count_win
+        picks.flat_map(&:last)
       else
         nil
       end
@@ -81,22 +74,29 @@ module DumbBot
         each_with_object(Hash.new { |h, k| h[k] = []}) { |(c, a), h| h[c] = a.map { |t| t['value'] } }
     end
 
-    def higher(known_tiles, above_tiles, color)
+    def possible_tiles(known_tiles, hand, color, direction)
       other_color = color == 'white' ? 'black' : 'white'
       color_tiles = (0..11).to_a - known_tiles[color]
       other_tiles = (0..11).to_a - known_tiles[other_color]
 
-      above_tiles.reverse.each do |tile|
-        # binding.pry if tile['value']
+      hand.each do |tile|
         if tile['color'] == color
-          up(color_tiles, other_tiles, tile['value'])
+          send(direction, color_tiles, other_tiles, tile['value'])
         else
-          up(other_tiles, color_tiles, tile['value'])
+          send(direction, other_tiles, color_tiles, tile['value'])
         end
       end
       color_tiles
-    rescue => e
     end
+
+    def higher(known_tiles, above_tiles, color)
+      possible_tiles(known_tiles, above_tiles.reverse, color, :up)
+    end
+
+    def lower(known_tiles, below_tiles, color)
+      possible_tiles(known_tiles, below_tiles, color, :down)
+    end
+
 
     def up(alpha, beta, value)
       last = nil
@@ -104,7 +104,7 @@ module DumbBot
         while alpha.any? && alpha[-1] >= value
           last = alpha.pop
         end
-        last = [value, last].compact.min
+        last = [value, last].compact.min # deal with no value in list
       else
         last = alpha.pop
       end
@@ -113,33 +113,16 @@ module DumbBot
       end
     end
 
-
-    def lower(known_tiles, below_tiles, color)
-      other_color = color == 'white' ? 'black' : 'white'
-      color_tiles = (0..11).to_a - known_tiles[color]
-      other_tiles = (0..11).to_a - known_tiles[other_color]
-
-      below_tiles.each do |tile|
-        if tile['color'] == color
-          down(color_tiles, other_tiles, tile['value'])
-        else
-          down(other_tiles, color_tiles, tile['value'])
-        end
-      end
-      color_tiles
-    end
-
     def down(alpha, beta, value)
       last = nil
       if value
         while alpha.any? && alpha[0] <= value
           last = alpha.shift
         end
-        last = [value, last].compact.max
+        last = [value, last].compact.max # deal with no value in list
       else
         last = alpha.shift
       end
-      # binding.pry
       while beta.any? && beta[0] < last
         beta.shift
       end
